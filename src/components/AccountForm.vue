@@ -11,26 +11,27 @@
     </el-button>
 
     <el-card v-for="(account, index) in accounts" :key="account.id" class="mb-4">
-      <el-form :model="account" label-width="100px" :inline="false" :rules="rules" ref="formRefs[index]">
+      <el-form :model="account" label-width="100px" :rules="rules" ref="formRefs[index]">
         <el-form-item label="Метки">
-          <el-input v-model="account.label" placeholder="Метки через ;" />
+          <el-input v-model="account.label" placeholder="через ;" @blur="parseLabel(index)" />
         </el-form-item>
 
         <el-form-item label="Тип записи">
-          <el-select v-model="account.type" placeholder="Выберите тип">
+          <el-select v-model="account.type" placeholder="Тип">
             <el-option label="LDAP" value="LDAP" />
             <el-option label="Локальная" value="Локальная" />
           </el-select>
         </el-form-item>
 
-        <el-form-item label="Логин" :rules="[{ required: true, message: 'Обязательное поле' }]">
+        <el-form-item label="Логин" prop="login" :rules="rules.login">
           <el-input v-model="account.login" />
         </el-form-item>
 
         <el-form-item
           v-if="account.type === 'Локальная'"
           label="Пароль"
-          :rules="[{ required: true, message: 'Обязательное поле' }]"
+          prop="password"
+          :rules="rules.password"
         >
           <el-input v-model="account.password" type="password" show-password />
         </el-form-item>
@@ -42,7 +43,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch, onMounted } from 'vue'
+import { ref, watch } from 'vue'
 import { useAccountsStore } from '@/store/accounts'
 
 const store = useAccountsStore()
@@ -53,15 +54,11 @@ watch(accounts.value, () => {
   store.setAccounts(accounts.value)
 }, { deep: true })
 
-const rules = {
-  login: [{ required: true, message: 'Введите логин', trigger: 'blur' }],
-  password: [{ required: true, message: 'Введите пароль', trigger: 'blur' }]
-}
-
 function addAccount() {
   accounts.value.push({
     id: Date.now(),
     label: '',
+    tags: [],
     type: 'Локальная',
     login: '',
     password: ''
@@ -70,6 +67,21 @@ function addAccount() {
 
 function removeAccount(index: number) {
   accounts.value.splice(index, 1)
+}
+
+function parseLabel(index: number) {
+  const raw = accounts.value[index].label
+  const tags = raw
+    .split(';')
+    .map(el => el.trim())
+    .filter(Boolean)
+    .map(text => ({ text }))
+  accounts.value[index].tags = tags
+}
+
+const rules = {
+  login: [{ required: true, message: 'Обязательное поле', trigger: 'blur' }],
+  password: [{ required: true, message: 'Обязательное поле', trigger: 'blur' }]
 }
 </script>
 

@@ -1,28 +1,17 @@
-import { defineStore } from 'pinia';
+import { defineStore } from 'pinia'
+import { ref, watch } from 'vue'
 
-export const useAccountsStore = defineStore('accounts', {
-    state: () => ({
-        accounts: [] as Array<{
-            label: string[];
-            type: 'LDAP' | 'Local';
-            login: string;
-            password: string | null;
-        }>,
-    }),
-    actions: {
-        addAccount() {
-            this.accounts.push({
-                label: [],
-                type: 'LDAP',
-                login: '',
-                password: null,
-            });
-        },
-        removeAccount(index: number) {
-            this.accounts.splice(index, 1);
-        },
-        saveAccount(index: number, account: any) {
-            this.accounts[index] = account;
-        },
-    },
-});
+export const useAccountsStore = defineStore('accounts', () => {
+  const saved = localStorage.getItem('accounts')
+  const accounts = ref(saved ? JSON.parse(saved) : [])
+
+  watch(accounts, () => {
+    localStorage.setItem('accounts', JSON.stringify(accounts.value))
+  }, { deep: true })
+
+  function setAccounts(newAccounts: any[]) {
+    accounts.value = newAccounts
+  }
+
+  return { accounts, setAccounts }
+})
